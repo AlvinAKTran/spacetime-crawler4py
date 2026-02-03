@@ -20,7 +20,7 @@ def extract_next_links(url: str, resp: Response) -> list[str]:
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     time.sleep(0.5)
     if resp.status == 200:
-        soup = bs(resp.raw_response.content)
+        soup = bs(resp.raw_response.content, features='lxml')
         return [a['href'] for a in soup.find_all('a', href = True)]
 
     return list()
