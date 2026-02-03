@@ -33,6 +33,10 @@ def is_valid(url: str) -> bool:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        
+        if "uci.edu" not in parsed.netloc: # Probably isn't as clean as using Regex, but works
+            return False
+
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
