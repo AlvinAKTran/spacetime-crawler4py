@@ -36,6 +36,14 @@ def is_valid(url: str) -> bool:
         
         if "uci.edu" not in parsed.netloc: # Probably isn't as clean as using Regex, but works
             return False
+        
+        if re.search(r'\b(ical|outlook)\b', parsed.query):
+            # Filter URLs with mentions of iCal and Outlook, as they are mostly related to a infinite calendar crawler trap 
+            return False
+        
+        if re.search(r'\d{4}-\d{2}-\d{2}' + r'|\d{2}-\d{2}-\d{4}', parsed.path + parsed.query):
+            # Filters URLs with date patterns to avoid crawling infinite calendar crawler traps
+            return False
 
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
