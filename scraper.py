@@ -41,8 +41,10 @@ def is_valid(url: str) -> bool:
             # Filter URLs with mentions of iCal and Outlook, as they are mostly related to a infinite calendar crawler trap 
             return False
         
-        if re.search(r'\d{4}-\d{2}-\d{2}' + r'|\d{2}-\d{2}-\d{4}', parsed.path + parsed.query):
+        
+        if re.search(r'\d{4}-\d{2}'+ r'|\d{2}-\d{4}', parsed.path + parsed.query):
             # Filters URLs with date patterns to avoid crawling infinite calendar crawler traps
+            # More prone to false postives, but worth it to avoid as many traps as possible
             return False
 
         return not re.match(
