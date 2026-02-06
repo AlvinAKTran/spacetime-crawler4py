@@ -30,7 +30,12 @@ def is_valid(url: str) -> bool:
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     try:
+        if len(url) > 200:
+            # Filter out URLs that are too long, which are likely to be crawler traps
+            return False
+        
         parsed = urlparse(url)
+        
         if parsed.scheme not in set(["http", "https"]):
             return False
         
