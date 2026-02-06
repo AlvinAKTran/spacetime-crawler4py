@@ -54,6 +54,10 @@ def is_valid(url: str) -> bool:
             # Disable crawling of more than 10 pages of paginated content
             return False
         
+        if re.search(
+            r'\b(share|redirect|redirect_to|limit|sid'
+            + r'|execution|ical|outlook|utm|utm_source|filter|action)\b', parsed.query.lower()):
+            # Filter many common URL queries that likely to lead to crawler traps or non-content pages
             return False
         
         
