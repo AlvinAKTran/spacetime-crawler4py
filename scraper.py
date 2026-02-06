@@ -46,6 +46,10 @@ def is_valid(url: str) -> bool:
         if "uci.edu" not in parsed.netloc: # Probably isn't as clean as using Regex, but works
             return False
         
+        if "archive.ics.uci.edu" in parsed.netloc:
+            # Disable crawling the Machine Learning Repository
+            return False
+        
         if parsed.fragment:
             # Filter any URLs with fragments to avoid crawling pages with the same HTML content 
             return False
