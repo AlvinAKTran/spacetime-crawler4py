@@ -39,6 +39,10 @@ def is_valid(url: str) -> bool:
         if parsed.scheme not in set(["http", "https"]):
             return False
         
+        if "uci.zoom.us" in parsed.netloc:
+            # Filter out any Zoom links that might bypass our next filter.
+            return False
+        
         if "uci.edu" not in parsed.netloc: # Probably isn't as clean as using Regex, but works
             return False
         
