@@ -62,6 +62,10 @@ def is_valid(url: str) -> bool:
             # Filter any URLs with fragments to avoid crawling pages with the same HTML content 
             return False
         
+        if re.search("commit\/", parsed.path):
+            # Avoid crawling commit pages with low value and possible infinite crawl traps
+            return False
+        
         if re.search(r'page/\d{2,}', parsed.path):
             # Disable crawling of more than 10 pages of paginated content
             return False
