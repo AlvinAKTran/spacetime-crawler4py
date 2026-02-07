@@ -1,6 +1,6 @@
 import re
 import time
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse, urljoin
 from utils.response import Response
 from bs4 import BeautifulSoup as bs
 
@@ -18,12 +18,25 @@ def extract_next_links(url: str, resp: Response) -> list[str]:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    time.sleep(0.5)
+    time.sleep(0.1)
     if resp.status == 200:
         soup = bs(resp.raw_response.content, features='lxml')
-        return [a['href'] for a in soup.find_all('a', href = True)]
+        links = list()
+		for a in soup.find_all('a', href = True):
+			parsed = urlparse(a['href'])
+			
+			url_as_list = list(parsed)
+			url_as_list[5] = "" #set fragment to ""
 
-    return list()
+			if url_as_list[1] != "": #netloc is not empty
+				links.append(urlunparse(url_as_list))
+			elif len(a['href']) == 0 or (a['href'][0] != "/" and a['href'][0] != ".") or ":" in a['href'] or "=" in a['href']: #some other non useful link/javascript/query
+				pass
+			else: #this link is a working path
+				links.append(urljoin(url, urlunparse(url_as_list)))
+
+		return links
+	return list()
 
 def is_valid(url: str) -> bool:
     # Decide whether to crawl this url or not. 
@@ -49,10 +62,18 @@ def is_valid(url: str) -> bool:
             or parsed.netloc.lower().endswith("stat.uci.edu")):
             # Filter everything outside *.ics.uci.edu/*, *.cs.uci.edu/*, *.informatics.uci.edu/*, *.stat.uci.edu/*
             return False
-        
-        if "archive.ics.uci.edu" in parsed.netloc.lower():
-            # Disable crawling the Machine Learning Repository
+
+        if (parsed.netloc.lower().startswith("gitlab.ics.uci.edu")):
+            #Filter for gitlab pages, which is almost entirely made up of student repositories we don't want to access
             return False
+        
+        if ":" in parsed.path:
+            #avoid branching jsonesque pages
+            return False
+        
+		if re.search("doku.php", parsed.path):
+			#site with a long directory of mostly not great information
+			return False
         
         if "grape.ics.uci.edu" in parsed.netloc.lower():
             # Low information value and mostly password protected
@@ -95,3 +116,4 @@ def is_valid(url: str) -> bool:
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
