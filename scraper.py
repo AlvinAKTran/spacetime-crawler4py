@@ -77,8 +77,8 @@ def is_valid(url: str) -> bool:
             return False
         
         
-        if re.search(r'\d{4}-\d{2}'+ r'|\d{2}-\d{4}', parsed.path + parsed.query):
-            # Filters URLs with date patterns to avoid crawling infinite calendar crawler traps
+        if re.search(r'\d{4}-\d{2}'+ r'|\d{2}-\d{4}', parsed.path + parsed.query) or re.search(r'\/events\/', parsed.path):
+            # Filters URLs with date patterns or mentions of events to avoid crawling infinite calendar crawler traps
             # More prone to false postives, but worth it to avoid as many traps as possible
             return False
 
