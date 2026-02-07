@@ -54,6 +54,10 @@ def is_valid(url: str) -> bool:
             # Disable crawling the Machine Learning Repository
             return False
         
+        if "grape.ics.uci.edu" in parsed.netloc:
+            # Low information value and mostly password protected
+            return False
+        
         if parsed.fragment:
             # Filter any URLs with fragments to avoid crawling pages with the same HTML content 
             return False
