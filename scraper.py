@@ -43,7 +43,11 @@ def is_valid(url: str) -> bool:
             # Filter out any Zoom links that might bypass our next filter.
             return False
         
-        if "uci.edu" not in parsed.netloc: # Probably isn't as clean as using Regex, but works
+        if not (parsed.netloc.endswith("ics.uci.edu")
+            or parsed.netloc.endswith("cs.uci.edu")
+            or parsed.netloc.endswith("informatics.uci.edu")
+            or parsed.netloc.endswith("stat.uci.edu")):
+            # Filter everything outside *.ics.uci.edu/*, *.cs.uci.edu/*, *.informatics.uci.edu/*, *.stat.uci.edu/*
             return False
         
         if "archive.ics.uci.edu" in parsed.netloc:
