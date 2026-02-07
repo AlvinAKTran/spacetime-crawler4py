@@ -39,22 +39,22 @@ def is_valid(url: str) -> bool:
         if parsed.scheme not in set(["http", "https"]):
             return False
         
-        if "uci.zoom.us" in parsed.netloc:
+        if "uci.zoom.us" in parsed.netloc.lower():
             # Filter out any Zoom links that might bypass our next filter.
             return False
         
-        if not (parsed.netloc.endswith("ics.uci.edu")
-            or parsed.netloc.endswith("cs.uci.edu")
-            or parsed.netloc.endswith("informatics.uci.edu")
-            or parsed.netloc.endswith("stat.uci.edu")):
+        if not (parsed.netloc.lower().endswith("ics.uci.edu")
+            or parsed.netloc.lower().endswith("cs.uci.edu")
+            or parsed.netloc.lower().endswith("informatics.uci.edu")
+            or parsed.netloc.lower().endswith("stat.uci.edu")):
             # Filter everything outside *.ics.uci.edu/*, *.cs.uci.edu/*, *.informatics.uci.edu/*, *.stat.uci.edu/*
             return False
         
-        if "archive.ics.uci.edu" in parsed.netloc:
+        if "archive.ics.uci.edu" in parsed.netloc.lower():
             # Disable crawling the Machine Learning Repository
             return False
         
-        if "grape.ics.uci.edu" in parsed.netloc:
+        if "grape.ics.uci.edu" in parsed.netloc.lower():
             # Low information value and mostly password protected
             return False
         
