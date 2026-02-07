@@ -22,21 +22,21 @@ def extract_next_links(url: str, resp: Response) -> list[str]:
     if resp.status == 200:
         soup = bs(resp.raw_response.content, features='lxml')
         links = list()
-		for a in soup.find_all('a', href = True):
-			parsed = urlparse(a['href'])
+        for a in soup.find_all('a', href = True):
+            parsed = urlparse(a['href'])
 			
-			url_as_list = list(parsed)
-			url_as_list[5] = "" #set fragment to ""
+            url_as_list = list(parsed)
+            url_as_list[5] = "" #set fragment to ""
 
-			if url_as_list[1] != "": #netloc is not empty
-				links.append(urlunparse(url_as_list))
-			elif len(a['href']) == 0 or (a['href'][0] != "/" and a['href'][0] != ".") or ":" in a['href'] or "=" in a['href']: #some other non useful link/javascript/query
-				pass
-			else: #this link is a working path
-				links.append(urljoin(url, urlunparse(url_as_list)))
+            if url_as_list[1] != "": #netloc is not empty
+                links.append(urlunparse(url_as_list))
+            elif len(a['href']) == 0 or (a['href'][0] != "/" and a['href'][0] != ".") or ":" in a['href'] or "=" in a['href']: #some other non useful link/javascript/query
+                pass
+            else: #this link is a working path
+                links.append(urljoin(url, urlunparse(url_as_list)))
 
-		return links
-	return list()
+        return links
+    return list()
 
 def is_valid(url: str) -> bool:
     # Decide whether to crawl this url or not. 
@@ -71,9 +71,9 @@ def is_valid(url: str) -> bool:
             #avoid branching jsonesque pages
             return False
         
-		if re.search("doku.php", parsed.path):
-			#site with a long directory of mostly not great information
-			return False
+        if re.search("doku.php", parsed.path):
+            #site with a long directory of mostly not great information
+            return False
         
         if "grape.ics.uci.edu" in parsed.netloc.lower():
             # Low information value and mostly password protected
