@@ -140,11 +140,11 @@ def is_valid(url: str) -> bool:
             # Filter out any Zoom links that might bypass our next filter.
             return False
         
-        if not (parsed.netloc.lower().endswith("ics.uci.edu")
-            or parsed.netloc.lower().endswith("cs.uci.edu")
-            or parsed.netloc.lower().endswith("informatics.uci.edu")
-            or parsed.netloc.lower().endswith("stat.uci.edu")):
+        for domain in ("ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"):
             # Filter everything outside *.ics.uci.edu/*, *.cs.uci.edu/*, *.informatics.uci.edu/*, *.stat.uci.edu/*
+            if parsed.netloc.lower().endswith("." + domain) or parsed.netloc.lower() == domain:
+                break
+        else:
             return False
 
         if (parsed.netloc.lower().startswith("gitlab.ics.uci.edu")):
@@ -197,8 +197,8 @@ def is_valid(url: str) -> bool:
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
             + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1|ppsx"
-            + r"|thmx|mso|arff|rtf|jar|csv"
+            + r"|epub|dll|cnf|tgz|sha1|ppsx|apk"
+            + r"|thmx|mso|arff|rtf|jar|csv|img"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
