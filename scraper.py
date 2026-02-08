@@ -89,8 +89,10 @@ def extract_next_links(url: str, resp: Response) -> list[str]:
         soup = bs(resp.raw_response.content, features='lxml')
         text = soup.get_text(separator=" ")
         html = str(soup)
-
         links = list()
+
+        with open('crawled_text.txt', 'a', encoding='utf-8') as file:
+            file.write(text + '\n')
 
         if is_low_information_page(text, html): #condition for filtering out low information pages, which are likely to be crawler traps or non-content pages
             return list()
@@ -202,3 +204,4 @@ def is_valid(url: str) -> bool:
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
