@@ -56,11 +56,11 @@ def is_valid(url: str) -> bool:
             # Filter out any Zoom links that might bypass our next filter.
             return False
         
-        if not (parsed.netloc.lower().endswith("ics.uci.edu")
-            or parsed.netloc.lower().endswith("cs.uci.edu")
-            or parsed.netloc.lower().endswith("informatics.uci.edu")
-            or parsed.netloc.lower().endswith("stat.uci.edu")):
+        for domain in ("ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"):
             # Filter everything outside *.ics.uci.edu/*, *.cs.uci.edu/*, *.informatics.uci.edu/*, *.stat.uci.edu/*
+            if parsed.netloc.lower().endswith("." + domain) or parsed.netloc.lower() == domain:
+                break
+        else:
             return False
 
         if (parsed.netloc.lower().startswith("gitlab.ics.uci.edu")):
