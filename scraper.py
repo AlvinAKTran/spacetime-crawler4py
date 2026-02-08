@@ -71,6 +71,10 @@ def scraper(url: str, resp: Response) -> list[str]:
     links = extract_next_links(url, resp)
     print(LONGEST_PAGE_COUNT)
     print(LONGEST_PAGE_LINK)
+
+    with open('longest_page.txt', 'a', encoding='utf-8') as file:
+            file.write(LONGEST_PAGE_LINK + '\n')
+
     return [link for link in links if is_valid(link)]
 
 
