@@ -84,7 +84,7 @@ def extract_next_links(url: str, resp: Response) -> list[str]:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    time.sleep(0.5) 
+    time.sleep(0.1) 
     if resp.status == 200:
         soup = bs(resp.raw_response.content, features='lxml')
         text = soup.get_text(separator=" ")
