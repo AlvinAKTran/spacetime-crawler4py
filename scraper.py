@@ -4,9 +4,75 @@ from urllib.parse import urlparse, urlunparse, urljoin
 from utils.response import Response
 from bs4 import BeautifulSoup as bs
 
+LONGEST_PAGE_COUNT = 0
+LONGEST_PAGE_LINK = ""
+SIMHASH_COUNTS = {}
+SIMHASH_LIMIT = 3
+WORD_FREQUENCY = {}
+
+
+def tokenize(text):
+    text = text.lower()
+    text = re.findall(r"[a-z0-9]{3,}", text) # Only keep words with 3 or more characters to reduce noise
+    return text
+
+
+def term_frequency(tokens):
+    tf = {}
+    for token in tokens:
+        if token not in tf:
+            tf[token] = 0
+        tf[token] += 1
+    return tf
+
+
+def sim_hash(text):
+    vector = [0] * 64 #Create 64 bit vector for simhash
+    tokens = tokenize(text) #tokenize the text
+    tf = term_frequency(tokens) #get frequency
+
+    for token, freq in tf.items(): #hash each token and update vector by freq
+        token_hash = hash(token)
+        for i in range(64):
+            if token_hash & (1 << i): #GPT helped with bitwise opeartions
+                vector[i] += freq
+            else:
+                vector[i] -= freq
+
+    #Encodes content into 64 bit simhash
+    simhash = 0 
+    for i in range(64): 
+        if vector[i] > 0: 
+            simhash |= (1 << i) #GPT helped with bitwise operations
+
+    return simhash
+
+
+def is_low_information_page(text, html):
+    tokenized_text = tokenize(text)
+    page_hash = sim_hash(text)
+
+    if len(tokenized_text) < 100:
+        return True
+    
+    if len(html) > 0 and len(text) / len(html) < 0.05:
+        return True
+
+    if page_hash in SIMHASH_COUNTS:
+        SIMHASH_COUNTS[page_hash] += 1
+    else:
+        SIMHASH_COUNTS[page_hash] = 1
+
+    if SIMHASH_COUNTS[page_hash] > SIMHASH_LIMIT:
+        return True
+
+
 def scraper(url: str, resp: Response) -> list[str]:
     links = extract_next_links(url, resp)
+    print(LONGEST_PAGE_COUNT)
+    print(LONGEST_PAGE_LINK)
     return [link for link in links if is_valid(link)]
+
 
 def extract_next_links(url: str, resp: Response) -> list[str]:
     # Implementation required.
@@ -18,13 +84,27 @@ def extract_next_links(url: str, resp: Response) -> list[str]:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    time.sleep(0.1)
+    time.sleep(0.5) 
     if resp.status == 200:
         soup = bs(resp.raw_response.content, features='lxml')
+        text = soup.get_text(separator=" ")
+        html = str(soup)
+
         links = list()
+
+        if is_low_information_page(text, html): #condition for filtering out low information pages, which are likely to be crawler traps or non-content pages
+            return list()
+
+        global LONGEST_PAGE_COUNT, LONGEST_PAGE_LINK
+        if len(text) > LONGEST_PAGE_COUNT:
+            LONGEST_PAGE_COUNT = len(text)
+            LONGEST_PAGE_LINK = url
+
+            print(f"New longest page found: {LONGEST_PAGE_COUNT} characters at {LONGEST_PAGE_LINK}")
+
         for a in soup.find_all('a', href = True):
             parsed = urlparse(a['href'])
-			
+
             url_as_list = list(parsed)
             url_as_list[5] = "" #set fragment to ""
 
@@ -36,7 +116,9 @@ def extract_next_links(url: str, resp: Response) -> list[str]:
                 links.append(urljoin(url, urlunparse(url_as_list)))
 
         return links
+
     return list()
+
 
 def is_valid(url: str) -> bool:
     # Decide whether to crawl this url or not. 
@@ -56,11 +138,11 @@ def is_valid(url: str) -> bool:
             # Filter out any Zoom links that might bypass our next filter.
             return False
         
-        for domain in ("ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"):
+        if not (parsed.netloc.lower().endswith("ics.uci.edu")
+            or parsed.netloc.lower().endswith("cs.uci.edu")
+            or parsed.netloc.lower().endswith("informatics.uci.edu")
+            or parsed.netloc.lower().endswith("stat.uci.edu")):
             # Filter everything outside *.ics.uci.edu/*, *.cs.uci.edu/*, *.informatics.uci.edu/*, *.stat.uci.edu/*
-            if parsed.netloc.lower().endswith("." + domain) or parsed.netloc.lower() == domain:
-                break
-        else:
             return False
 
         if (parsed.netloc.lower().startswith("gitlab.ics.uci.edu")):
@@ -73,6 +155,10 @@ def is_valid(url: str) -> bool:
         
         if re.search("doku.php", parsed.path):
             #site with a long directory of mostly not great information
+            return False
+        
+        if "grape.ics.uci.edu" in parsed.netloc.lower():
+            # Low information value and mostly password protected
             return False
         
         if "grape.ics.uci.edu" in parsed.netloc.lower():
@@ -98,10 +184,10 @@ def is_valid(url: str) -> bool:
             return False
         
         
-        if re.search(r'\d{4}-\d{2}'+ r'|\d{2}-\d{4}', parsed.path + parsed.query) or re.search(r'\/events\/', parsed.path):
-            # Filters URLs with date patterns or mentions of events to avoid crawling infinite calendar crawler traps
-            # More prone to false postives, but worth it to avoid as many traps as possible
-            return False
+        # if re.search(r'\d{4}-\d{2}'+ r'|\d{2}-\d{4}', parsed.path + parsed.query) or re.search(r'\/events\/', parsed.path):
+        #     # Filters URLs with date patterns or mentions of events to avoid crawling infinite calendar crawler traps
+        #     # More prone to false postives, but worth it to avoid as many traps as possible
+        #     return False
 
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -109,11 +195,10 @@ def is_valid(url: str) -> bool:
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
             + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1|ppsx|apk"
-            + r"|thmx|mso|arff|rtf|jar|csv|img"
+            + r"|epub|dll|cnf|tgz|sha1|ppsx"
+            + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", parsed)
         raise
-
